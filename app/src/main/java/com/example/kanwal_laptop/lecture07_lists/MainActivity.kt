@@ -1,8 +1,15 @@
 package com.example.kanwal_laptop.lecture07_lists
 
+import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
+import android.content.SharedPreferences
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.preference.Preference
+import android.preference.PreferenceManager
+import android.support.v7.app.AlertDialog
+import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.ScrollView
 import android.widget.Toast
@@ -15,8 +22,7 @@ import kotlin.collections.HashMap
 
 
 class MainActivity : AppCompatActivity() {
-    /*
-    private var myListAdapter: ArrayAdapter<String>? = null
+    //    private var myListAdapter: ArrayAdapter<String>? = null
     private val myFavSeasonList: MutableList<String> = mutableListOf(
         "Silicon Valley",
         "Game of Thrones",
@@ -42,35 +48,39 @@ class MainActivity : AppCompatActivity() {
 
     //initialize custom adapter
     private lateinit var myCustomAdapter: CustomAdapter
-*/
+/*
     //use list initialization to store GRE words
 //    private var wordList : List<String> = listOf()
 
-    private var myListAdapter: ArrayAdapter<String>? = null
+        private var myListAdapter: ArrayAdapter<String>? = null
     //or initialize array list for storing GRE words
     private var wordList = ArrayList<String>()
     private var DefinitionList = ArrayList<String>()
     private var wordToDefinition = HashMap<String, String>()
     private var wordToDisplay: String = ""
-
+*/
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        if (savedInstanceState != null) {
+            loadSeasonData(this)
+        }
+
 
 //        seasonListWithAdapter()
-//        seasonListWithCustomAdapter()
-//        seasonListRemove()
-        readFromGREFile()
-        setUpEntries()
-        list_of_seasons.setOnItemClickListener { parent, view, position, id ->
-            val selectedDefinition: String = parent.getItemAtPosition(position).toString()
-            if (selectedDefinition.equals(wordToDefinition[wordToDisplay])) {
-                Toast.makeText(this, "You selected Right", Toast.LENGTH_SHORT).show()
-                readFromGREFile()
-                setUpEntries()
-            }
-        }
+        seasonListWithCustomAdapter()
+        seasonListRemove()
+//        readFromGREFile()
+//        setUpEntries()
+//        list_of_seasons.setOnItemClickListener { parent, view, position, id ->
+//            val selectedDefinition: String = parent.getItemAtPosition(position).toString()
+//            if (selectedDefinition.equals(wordToDefinition[wordToDisplay])) {
+//                Toast.makeText(this, "You selected Right", Toast.LENGTH_SHORT).show()
+//                readFromGREFile()
+//                setUpEntries()
+//            }
+//        }
 
     }
 
@@ -92,7 +102,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(myIntent)
         }
     }
-
+*/
 
     fun seasonListWithCustomAdapter() {
         // Custom adapter properties
@@ -113,15 +123,74 @@ class MainActivity : AppCompatActivity() {
     fun seasonListRemove() {
         //remove list item
         list_of_seasons.setOnItemLongClickListener { parent, view, position, id ->
-            myFavSeasonList.removeAt(position)
-            // predefined adapter
+            val builder = AlertDialog.Builder(this)
+            builder.setTitle("Message")
+            builder.setMessage("Do You Want to Delete it" + parent.getItemAtPosition(position).toString())
+            builder.setPositiveButton("No"){dialog, which ->
+                dialog.dismiss()
+            }
+            builder.setNegativeButton("Yes"){dialog, which ->
+                myFavSeasonList.removeAt(position)
+                myFavSeasonImage.removeAt(position)
+                // predefined adapter
 //            myListAdapter!!.notifyDataSetChanged()
-            // notify custom adapter about data change
-            myCustomAdapter.notifyDataSetChanged()
+                // notify custom adapter about data change
+                myCustomAdapter.notifyDataSetChanged()
+            }
+
+            builder.create().show()
+
             return@setOnItemLongClickListener true
         }
-    } */
+    }
 
+    override fun onPause() {
+        saveSeasonArrayData()
+        Log.i("Test", "On Pause Called")
+        super.onPause()
+    }
+
+    override fun onStop() {
+        saveSeasonArrayData()
+        Log.i("Test", "On Stop Called")
+        super.onStop()
+    }
+
+    fun saveSeasonArrayData(): Boolean {
+        val sharedPreferences: SharedPreferences = getSharedPreferences("mySeasonDataFile",
+                                                                        Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+        //send the size of lists
+        editor.putInt("seasonNameListSize", myFavSeasonList.size)
+        editor.putInt("seasonImageListSize", myFavSeasonImage.size)
+
+        for (i in 0..myFavSeasonList.size - 1) {
+            editor.remove("seasonName$i")
+            editor.putString("seasonName", myFavSeasonList.get(i))
+        }
+
+        for (j in 0..myFavSeasonImage.size - 1) {
+            editor.remove("seasonImage$j")
+            editor.putInt("seasonImage", myFavSeasonImage.get(j))
+        }
+
+        return editor.commit()
+    }
+
+    fun loadSeasonData(context: Context) {
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+        val seasonNameSize = sharedPreferences.getInt("seasonNameListSize", 0)
+        val seasonImageSize = sharedPreferences.getInt("seasonImageListSize", 0)
+
+        for (i in 0..seasonNameSize) {
+            myFavSeasonList.add(sharedPreferences.getString("seasonName$i", null))
+        }
+
+        for (j in 0..seasonImageSize) {
+            myFavSeasonImage.add(sharedPreferences.getInt("seasonImage$j", 0))
+        }
+    }
+/*
     fun readFromGREFile() {
         val scanner: Scanner = Scanner(resources.openRawResource(R.raw.grewords))
         while (scanner.hasNextLine()) {
@@ -155,4 +224,6 @@ class MainActivity : AppCompatActivity() {
         )
         list_of_seasons.adapter = myListAdapter
     }
+
+    */
 }
